@@ -31,6 +31,7 @@ app = Flask(__name__)
 #################################################
 # Flask Routes
 #################################################
+# set the home route and list available routes
 @app.route("/")
 def welcome():
     """List all available routes"""
@@ -43,7 +44,7 @@ def welcome():
         f"<i>Temps from start</i>: /api/v1.0/start<br/>"
         f"<i>Temps for specified start-end</i>: /api/v1.0/start/end<br/>"
     )
-
+# create first date variable for the elements that look into the last 12 months of data
 def last_year(): 
     session = Session(engine)
     last_date = session.query(func.max(Measurement.date)).first()[0]
@@ -58,11 +59,13 @@ def precipitation():
     session = Session(engine)
     p_data = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= last_year()).all()
     session.close()
+    # create dictionary to hold the precipitation data and append as you loop
     precip_data = []
     for date, prcp in p_data:
         p_dict = {}
         p_dict[date] = prcp
         precip_data.append(p_dict)
+    # jsonify the precipitation dictionary
     return jsonify(precip_data)
 
 # Return a JSON list of stations from the dataset.
@@ -71,6 +74,7 @@ def stations():
     session = Session(engine)
     result = session.query(Station.station, Station.name, Station.latitude, Station.longitude, Station.elevation).all()
     session.close()
+    # create station dictionary to store each station's name, ID, lat, long, and elevation
     stations = []
     for station, name, latitude, longitude, elevation in result:
         s_dict = {}
@@ -86,10 +90,12 @@ def stations():
 # Return a JSON list of temperature observations for the previous year.
 @app.route("/api/v1.0/tobs")
 def tobs():
+    #create query to pull the last 12 months of data from USC00519281 (most active station)
     session = Session(engine)
     t_data = session.query(Measurement.date, Measurement.tobs).filter(Measurement.station == 'USC00519281').\
                         filter(Measurement.date >= last_year()).all()               
     session.close()
+    #create the tobs dictionary for when you loop
     t_list = []
     for date, tobs in t_data:
         tobs_dict = {}
